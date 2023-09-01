@@ -6,7 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# Vulkan API
 vulkano = "0.33"
 vulkano-shaders = "0.33"
 vulkano-win = "0.33"
+vulkano-util = "0.33"
+
+# Window Creation/Handler
 winit = "0.28"
+
+# Linear Algebra Library for Computer Graphics
+cgmath = "0.18.0"
