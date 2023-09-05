@@ -13,17 +13,19 @@ use vulkano::{image::ImageUsage, swapchain::PresentMode};
 
 use vulkano_util::{
   context::{VulkanoConfig, VulkanoContext},
-  renderer::{DEFAULT_IMAGE_FORMAT},
+  renderer::{VulkanoWindowRenderer, DEFAULT_IMAGE_FORMAT},
   window::{VulkanoWindows, WindowDescriptor},
 };
 
 use winit::{
   event::{Event, WindowEvent},
   event_loop::{ControlFlow, EventLoop},
+  platform::run_return::EventLoopExtRunReturn,
 };
 
 mod app;
 mod compute_pipeline;
+mod place_over_frame;
 
 
 fn main() {
@@ -101,11 +103,42 @@ fn main() {
     }
 
     app.update_state_after_inputs(primary_window_renderer);
-    computer_then_render(primary_window_renderer, &mut app, render_target_id);
+    compute_then_render(primary_window_renderer, &mut app, render_target_id);
     app.reset_input_state();
     primary_window_renderer.window().set_title(&format!(
       "Vulkano Cube fps: {:.2}",
       app.avg_fps(),
     ));
   }
+}
+
+
+fn handle_events(
+  event_loop: &mut EventLoop<()>,
+  renderer: &mut VulkanoWindowRenderer,
+  app: &mut CubeApp,
+)
+-> bool {
+  let mut is_running = true;
+
+  event_loop.run_return(|event, _, control_flow| {
+    *control_flow = ControlFlow::Wait;
+
+    match &event {
+      Event::WindowEvent { event, .. } => match event {
+        WindowEvent::CloseRequested => is_running = false,
+        WindowEvent::Resized(..) | WindowEvent::ScaleFactorChanged { .. } => {
+          renderer.resize()
+        }
+        _ => (),
+      },
+      Event::MainEventsCleared => *control_flow = ControlFlow::Exit,
+      _ => (),
+    }
+
+    // Pass event for the app to handle our inputs.
+    app.handle_input(renderer.window_size(), &event);
+  });
+
+  is_running && app.is_running()
 }
